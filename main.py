@@ -19,6 +19,19 @@ from pyrogram.errors.exceptions.bad_request_400 import ChatAdminRequired
 from pyrogram.raw.functions.phone import CreateGroupCall
 from pyrogram.raw.types import InputPeerChannel
 from pyrogram.types import Message
+# --- ဒီနေရာမှာ ထည့်ပါ ---
+import threading
+from http.server import HTTPServer, SimpleHTTPRequestHandler
+import os
+
+def run_server():
+    port = int(os.environ.get("PORT", 8080))
+    server = HTTPServer(('0.0.0.0', port), SimpleHTTPRequestHandler)
+    print(f"Server started on port {port}")
+    server.serve_forever()
+
+threading.Thread(target=run_server, daemon=True).start()
+# -----------------------
 import db
 
 db.init()
