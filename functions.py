@@ -23,10 +23,12 @@ if is_config:
 else:
     from sample_config import *
 
+# *** ဒီနေရာကို ပြင်ထားပါတယ် ***
 app = Client(
-    SESSION_STRING if HEROKU else "tgvc",
+    "tgvc",
     api_id=API_ID,
     api_hash=API_HASH,
+    session_string=SESSION_STRING if HEROKU else None
 )
 
 ydl_opts = {"format": "bestaudio", "quiet": True}
@@ -42,7 +44,6 @@ def get_default_service() -> str:
             return "youtube"
     except NameError:
         return "youtube"
-
 
 async def pause_skip_watcher(message: Message, duration: int):
     try:
@@ -86,13 +87,11 @@ async def pause_skip_watcher(message: Message, duration: int):
         print(str(e))
         pass
 
-
 async def change_vc_title(title: str):
     peer = await app.resolve_peer(CHAT_ID)
     chat = await app.send(GetFullChannel(channel=peer))
     data = EditGroupCallTitle(call=chat.full_chat.call, title=title)
     await app.send(data)
-
 
 def transcode(filename: str):
     ffmpeg.input(filename).output(
@@ -105,7 +104,6 @@ def transcode(filename: str):
     ).overwrite_output().run()
     os.remove(filename)
 
-
 # Download song
 async def download_and_transcode_song(url):
     song = "temp.mp3"
@@ -116,7 +114,6 @@ async def download_and_transcode_song(url):
                 await f.write(await resp.read())
                 await f.close()
     await run_async(transcode, song)
-
 
 # Convert seconds to mm:ss
 def convert_seconds(seconds: int):
@@ -133,7 +130,6 @@ def time_to_seconds(time):
         for i, x in enumerate(reversed(stringt.split(":")))
     )
 
-
 # Change image size
 def changeImageSize(maxWidth: int, maxHeight: int, image):
     widthRatio = maxWidth / image.size[0]
@@ -143,10 +139,8 @@ def changeImageSize(maxWidth: int, maxHeight: int, image):
     newImage = image.resize((newWidth, newHeight))
     return newImage
 
-
 async def send(*args, **kwargs):
     await app.send_message(CHAT_ID, *args, **kwargs)
-
 
 async def generate_cover(
     requested_by, title, artist, duration, thumbnail
@@ -203,11 +197,9 @@ async def generate_cover(
         pass
     return final
 
-
 async def run_async(func, *args, **kwargs):
     loop = asyncio.get_running_loop()
     return await loop.run_in_executor(None, func, *args, **kwargs)
-
 
 async def download_transcode_gencover(
     requested_by, title, artist, duration, thumbnail, url
@@ -222,7 +214,6 @@ async def download_transcode_gencover(
         ),
         download_and_transcode_song(url),
     )
-
 
 async def get_song(query: str, service: str):
     async with ClientSession() as session:
@@ -255,7 +246,6 @@ async def get_song(query: str, service: str):
             return
 
     return title, duration, thumbnail, artist, url
-
 
 async def play_song(requested_by, query, message, service):
     m = await message.reply_text(
@@ -314,7 +304,6 @@ Platform: {service}
     os.remove(cover)
     await pause_skip_watcher(m, duration)
     await m.delete()
-
 
 async def telegram(message):
     err = "**Can't play that**"
