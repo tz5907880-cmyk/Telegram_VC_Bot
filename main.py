@@ -394,3 +394,16 @@ async def main():
 
 loop = asyncio.get_event_loop()
 loop.run_until_complete(main())
+
+# အောက်ဆုံးမှာ ဒီ Code လေး ထည့်ပါ
+import threading
+from http.server import HTTPServer, SimpleHTTPRequestHandler
+import os
+
+def run_server():
+    port = int(os.environ.get("PORT", 8080))
+    server = HTTPServer(('0.0.0.0', port), SimpleHTTPRequestHandler)
+    print(f"Server started on port {port}")
+    server.serve_forever()
+
+threading.Thread(target=run_server, daemon=True).start()
