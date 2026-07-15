@@ -1,22 +1,28 @@
-from __future__ import unicode_literals
-
-import asyncio
 import os
-import traceback
+import glob
 
+# Junk session files တွေကို ဖျက်ပစ်မယ်
+for f in glob.glob("*.session"):
+    if len(f) > 20:
+        try:
+            os.remove(f)
+        except:
+            pass
+
+from future import unicode_literals
+import asyncio
+import traceback
 import pytgcalls
 from pyrogram import filters, idle
-from pyrogram.errors.exceptions.bad_request_400 import \
-    ChatAdminRequired
+from pyrogram.errors.exceptions.bad_request_400 import ChatAdminRequired
 from pyrogram.raw.functions.phone import CreateGroupCall
 from pyrogram.raw.types import InputPeerChannel
 from pyrogram.types import Message
-
-# Initialize db
 import db
 
 db.init()
 
+from functions import (CHAT_ID, app, get_default_service, play_song, telegram, BITRATE)
 from db import db
 from functions import (CHAT_ID, app, get_default_service, play_song,
                         telegram, BITRATE)
