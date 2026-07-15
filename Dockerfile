@@ -11,8 +11,8 @@ RUN python3.9 -m pip install -U pip setuptools==59.6.0 wheel
 
 COPY . .
 
-# Install requirements with --no-build-isolation to force using our downgraded setuptools
-RUN python3.9 -m pip install --no-build-isolation -U -r requirements.txt
+# Install requirements and force NumPy to be 1.x (numpy<2) to fix ABI version error
+RUN python3.9 -m pip install --no-build-isolation -U -r requirements.txt "numpy<2"
 
 # Running VCBot
 CMD ["python3.9", "main.py"]
