@@ -1,3 +1,5 @@
+from __future__ import unicode_literals
+
 import os
 import glob
 
@@ -9,7 +11,6 @@ for f in glob.glob("*.session"):
         except:
             pass
 
-from __future__ import unicode_literals
 import asyncio
 import traceback
 import pytgcalls
