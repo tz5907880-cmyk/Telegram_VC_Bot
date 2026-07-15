@@ -28,10 +28,8 @@ app = Client(
     api_id=API_ID,
     api_hash=API_HASH,
 )
-session = ClientSession()
-arq = ARQ(ARQ_API, ARQ_API_KEY, session)
-ydl_opts = {"format": "bestaudio", "quiet": True}
 
+ydl_opts = {"format": "bestaudio", "quiet": True}
 
 # Get default service from config
 def get_default_service() -> str:
@@ -40,9 +38,9 @@ def get_default_service() -> str:
         config_service = DEFAULT_SERVICE.lower()
         if config_service in services:
             return config_service
-        else:  # Invalid DEFAULT_SERVICE
+        else:
             return "youtube"
-    except NameError:  # DEFAULT_SERVICE not defined
+    except NameError:
         return "youtube"
 
 
@@ -111,11 +109,12 @@ def transcode(filename: str):
 # Download song
 async def download_and_transcode_song(url):
     song = "temp.mp3"
-    async with session.get(url) as resp:
-        if resp.status == 200:
-            f = await aiofiles.open(song, mode="wb")
-            await f.write(await resp.read())
-            await f.close()
+    async with ClientSession() as session:
+        async with session.get(url) as resp:
+            if resp.status == 200:
+                f = await aiofiles.open(song, mode="wb")
+                await f.write(await resp.read())
+                await f.close()
     await run_async(transcode, song)
 
 
@@ -127,8 +126,6 @@ def convert_seconds(seconds: int):
     seconds %= 60
     return "%02d:%02d" % (minutes, seconds)
 
-
-# Convert hh:mm:ss to seconds
 def time_to_seconds(time):
     stringt = str(time)
     return sum(
@@ -151,17 +148,15 @@ async def send(*args, **kwargs):
     await app.send_message(CHAT_ID, *args, **kwargs)
 
 
-# Generate cover for youtube
-
-
 async def generate_cover(
     requested_by, title, artist, duration, thumbnail
 ):
-    async with session.get(thumbnail) as resp:
-        if resp.status == 200:
-            f = await aiofiles.open("background.png", mode="wb")
-            await f.write(await resp.read())
-            await f.close()
+    async with ClientSession() as session:
+        async with session.get(thumbnail) as resp:
+            if resp.status == 200:
+                f = await aiofiles.open("background.png", mode="wb")
+                await f.write(await resp.read())
+                await f.close()
     background = "./background.png"
     final = "final.png"
     temp = "temp.png"
@@ -230,32 +225,34 @@ async def download_transcode_gencover(
 
 
 async def get_song(query: str, service: str):
-    if service == "saavn":
-        resp = await arq.saavn(query)
-        if not resp.ok:
+    async with ClientSession() as session:
+        arq = ARQ(ARQ_API, ARQ_API_KEY, session)
+        if service == "saavn":
+            resp = await arq.saavn(query)
+            if not resp.ok:
+                return
+            song = resp.result[0]
+            title = song.song[0:30]
+            duration = int(song.duration)
+            thumbnail = song.image
+            artist = (
+                song.singers
+                if not isinstance(song.singers, list)
+                else song.singers[0]
+            )
+            url = song.media_url
+        elif service == "youtube":
+            resp = await arq.youtube(query)
+            if not resp.ok:
+                return
+            song = resp.result[0]
+            title = song.title[0:30]
+            duration = time_to_seconds(song.duration)
+            thumbnail = song.thumbnails[0]
+            artist = song.channel
+            url = "https://youtube.com" + song.url_suffix
+        else:
             return
-        song = resp.result[0]
-        title = song.song[0:30]
-        duration = int(song.duration)
-        thumbnail = song.image
-        artist = (
-            song.singers
-            if not isinstance(song.singers, list)
-            else song.singers[0]
-        )
-        url = song.media_url
-    elif service == "youtube":
-        resp = await arq.youtube(query)
-        if not resp.ok:
-            return
-        song = resp.result[0]
-        title = song.title[0:30]
-        duration = time_to_seconds(song.duration)
-        thumbnail = song.thumbnails[0]
-        artist = song.channel
-        url = "https://youtube.com" + song.url_suffix
-    else:
-        return
 
     return title, duration, thumbnail, artist, url
 
@@ -264,7 +261,6 @@ async def play_song(requested_by, query, message, service):
     m = await message.reply_text(
         f"__**Searching for {query} on {service}.**__", quote=False
     )
-    # get song title, url etc
     song = await get_song(query, service)
     if not song:
         return await m.edit("There's no such song on " + service)
@@ -276,8 +272,7 @@ async def play_song(requested_by, query, message, service):
             return await m.edit("[ERROR]: SONG_TOO_BIG")
 
         await m.edit("__**Generating thumbnail.**__")
-        cover = await generate_cover(
-            requested_by,
+        cover = await generate_cover(requested_by,
             title,
             artist,
             convert_seconds(duration),
@@ -307,12 +302,11 @@ async def play_song(requested_by, query, message, service):
         )
     await m.delete()
     caption = f"""
-**Name:** {title[:45]}
-**Duration:** {convert_seconds(duration)}
-**Requested By:** {message.from_user.mention}
-**Platform:** {service}
+**Name: {title[:45]}
+Duration: {convert_seconds(duration)}
+Requested By: {message.from_user.mention}
+Platform: {service}
 """
-    await m.delete()
     m = await message.reply_photo(
         photo=cover,
         caption=caption,
@@ -322,11 +316,8 @@ async def play_song(requested_by, query, message, service):
     await m.delete()
 
 
-# Telegram
-
-
 async def telegram(message):
-    err = "__**Can't play that**__"
+    err = "**Can't play that**"
     reply = message.reply_to_message
     if not reply:
         return await message.reply_text(err)
@@ -336,11 +327,11 @@ async def telegram(message):
         return await message.reply_text(err)
     if int(reply.audio.file_size) >= 104857600:
         return await message.reply_text("[ERROR]: SONG_TOO_BIG")
-    m = await message.reply_text("__**Downloading.**__")
+    m = await message.reply_text("**Downloading.**")
     song = await message.reply_to_message.download()
-    await m.edit("__**Transcoding.**__")
+    await m.edit("**Transcoding.**")
     await run_async(transcode, song)
-    await m.edit(f"__**Playing {reply.link}**__", disable_web_page_preview=True)
+    await m.edit(f"**Playing {reply.link}**", disable_web_page_preview=True)
     await pause_skip_watcher(m, reply.audio.duration)
     if os.path.exists(song):
         os.remove(song)
