@@ -19,7 +19,7 @@ db.init()
 
 from db import db
 from functions import (CHAT_ID, app, get_default_service, play_song,
-                       session, telegram, BITRATE)
+                        telegram, BITRATE)
 from misc import HELP_TEXT, REPO_TEXT
 
 running = False  # Tells if the queue is running or not
@@ -30,7 +30,7 @@ OUTGOING_AUDIO_BITRATE_KBIT = BITRATE
 
 
 @app.on_message(
-    filters.command("help") 
+    filters.command("help")
     & ~filters.private
     & filters.chat(CHAT_ID)
 )
@@ -39,7 +39,7 @@ async def help(_, message):
 
 
 @app.on_message(
-    filters.command("repo") 
+    filters.command("repo")
     & ~filters.private
     & filters.chat(CHAT_ID)
 )
@@ -178,7 +178,6 @@ async def skip_func(_, message):
     await message.delete()
 
 
-
 @app.on_message(
     filters.command("play") & ~filters.private & filters.chat(CHAT_ID)
 )
@@ -213,7 +212,9 @@ __/play Reply_On_Audio__"""
                 text = message.text.split("\n")[0]
                 text = text.split(None, 2)[1:]
                 service = text[0].lower()
+
                 services = ["youtube", "saavn"]
+
                 if service in services:
                     song_name = text[1]
                 else:
@@ -282,8 +283,6 @@ async def queue_list(_, message):
 
 
 # Queue handler
-
-
 async def start_queue(message=None):
     while db:
         if "queue_breaker" in db and db.get("queue_breaker") != 0:
@@ -356,7 +355,9 @@ Example:
     db["playlist"] = True
     db["queue"] = asyncio.Queue()
     for line in raw_playlist.split("\n"):
+
         services = ["youtube", "saavn"]
+
         if line.split()[0].lower() in services:
             service = line.split()[0].lower()
             song_name = " ".join(line.split()[1:])
@@ -382,7 +383,6 @@ async def main():
     await app.start()
     print("Bot started!")
     await idle()
-    await session.close()
 
 
 loop = asyncio.get_event_loop()
