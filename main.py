@@ -407,3 +407,17 @@ def run_server():
     server.serve_forever()
 
 threading.Thread(target=run_server, daemon=True).start()
+
+# --- Port ဖွင့်ပေးတဲ့ Code (ဒီအပိုင်းကို အောက်ဆုံးမှာထည့်ပါ) ---
+import threading
+from http.server import HTTPServer, SimpleHTTPRequestHandler
+import os
+
+def run_server():
+    port = int(os.environ.get("PORT", 8080))
+    server = HTTPServer(('0.0.0.0', port), SimpleHTTPRequestHandler)
+    print(f"Server started on port {port}")
+    server.serve_forever()
+
+threading.Thread(target=run_server, daemon=True).start()
+# --------------------------------------------------------
