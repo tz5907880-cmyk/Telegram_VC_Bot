@@ -11,7 +11,8 @@ RUN python3.9 -m pip install -U pip setuptools==59.6.0 wheel
 
 COPY . .
 
-RUN python3.9 -m pip install -U -r requirements.txt
+# Install requirements with --no-build-isolation to force using our downgraded setuptools
+RUN python3.9 -m pip install --no-build-isolation -U -r requirements.txt
 
 # Running VCBot
 CMD ["python3.9", "main.py"]
