@@ -9,7 +9,7 @@ for f in glob.glob("*.session"):
         except:
             pass
 
-from future import unicode_literals
+from __future__ import unicode_literals
 import asyncio
 import traceback
 import pytgcalls
